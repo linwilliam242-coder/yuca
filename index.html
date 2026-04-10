@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>语擦类型测试</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif}
+body{background:#f7f8fa;color:#333;line-height:1.6}
+.container{max-width:700px;margin:50px auto;padding:0 20px}
+.box{background:#fff;border-radius:16px;padding:30px 26px;box-shadow:0 2px 12px rgba(0,0,0,0.07)}
+.title{font-size:24px;font-weight:600;margin-bottom:10px}
+.desc{color:#666;margin-bottom:24px}
+.question{font-size:18px;margin-bottom:18px}
+.option{display:block;width:100%;padding:14px 18px;background:#f7f8fa;border:none;border-radius:12px;text-align:left;margin-bottom:10px;cursor:pointer;font-size:16px}
+.option:hover{background:#eef2ff}
+.option.selected{background:#007aff;color:#fff}
+.btn{padding:12px 28px;background:#007aff;color:#fff;border:none;border-radius:12px;font-size:16px;cursor:pointer;margin-top:12px}
+.btn:disabled{background:#ccc}
+.progress{color:#888;font-size:14px;margin-bottom:12px}
+.result-box .type{font-size:22px;color:#007aff;font-weight:bold;margin:12px 0}
+.result-box .info{color:#555}
+.hide{display:none}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="box" id="pageStart">
+    <div class="title">语擦类型测试</div>
+    <div class="desc">25题，可多选最多2项，测出最适合你的语擦世界观</div>
+    <button class="btn" onclick="start()">开始测试</button>
+  </div>
+
+  <div class="box hide" id="pageQuiz">
+    <div class="progress" id="progress"></div>
+    <div class="question" id="question"></div>
+    <div id="options"></div>
+    <button class="btn hide" id="nextBtn" onclick="next()">下一题</button>
+  </div>
+
+  <div class="box hide result-box" id="pageResult">
+    <div class="title">你的专属语擦类型</div>
+    <div class="type" id="typeName"></div>
+    <div class="info" id="typeDesc"></div>
+    <button class="btn" onclick="restart()">重新测试</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {q:"你更喜欢哪种氛围？",o:[
+    {t:"A",txt:"安静柔和，有自然意境",v:["古玄","古原","妖和精怪"]},
+    {t:"B",txt:"热闹轻松，像日常聚会",v:["现原","校园"]},
+    {t:"C",txt:"开阔宏大，充满未知",v:["星际","赛博未来"]},
+    {t:"D",txt:"典雅庄严，有历史感",v:["西幻","民国"]},
+    {t:"E",txt:"神秘压抑，带点悬念",v:["灵异怪谈","末世","现玄"]}
+  ]},
+  {q:"你更偏爱哪种场景？",o:[
+    {t:"A",txt:"山林、庭院、流水、雾",v:["古玄","古原","妖和精怪"]},
+    {t:"B",txt:"街道、教室、咖啡馆",v:["现原","校园"]},
+    {t:"C",txt:"城市高空、科技建筑",v:["赛博未来"]},
+    {t:"D",txt:"古堡、教堂、森林",v:["西幻"]},
+    {t:"E",txt:"废墟、雨夜、无人角落",v:["末世","灵异怪谈"]}
+  ]},
+  {q:"你更向往哪种状态？",o:[
+    {t:"A",txt:"随心自在，不受束缚",v:["古玄","古原"]},
+    {t:"B",txt:"安稳平淡，人际关系简单",v:["现原","校园"]},
+    {t:"C",txt:"强大独立，有掌控力",v:["星际","赛博未来"]},
+    {t:"D",txt:"有信仰或使命，活得深刻",v:["西幻","民国"]},
+    {t:"E",txt:"洞察规则，隐藏在暗处",v:["灵异怪谈","现玄"]}
+  ]},
+  {q:"你更喜欢的节奏是？",o:[
+    {t:"A",txt:"慢热细腻，注重情绪",v:["古玄","古原","现原"]},
+    {t:"B",txt:"轻快日常，小事也有趣",v:["校园","现原"]},
+    {t:"C",txt:"紧凑推进，冲突明显",v:["星际","末世"]},
+    {t:"D",txt:"层层铺垫，格局宏大",v:["西幻","民国"]},
+    {t:"E",txt:"紧张悬疑，随时反转",v:["灵异怪谈","现玄"]}
+  ]},
+  {q:"你更被哪种美感吸引？",o:[
+    {t:"A",txt:"诗意、留白、意境",v:["古玄","古原"]},
+    {t:"B",txt:"清新、真实、生活化",v:["现原","校园"]},
+    {t:"C",txt:"冷峻、科技、线条感",v:["星际","赛博未来"]},
+    {t:"D",txt:"华丽、复古、仪式感",v:["西幻","民国"]},
+    {t:"E",txt:"诡谲、破碎、氛围感",v:["灵异怪谈","妖和精怪"]}
+  ]},
+  {q:"你更喜欢的相处方式？",o:[
+    {t:"A",txt:"含蓄内敛，点到为止",v:["古玄","古原","民国"]},
+    {t:"B",txt:"自然随意，轻松打闹",v:["现原","校园"]},
+    {t:"C",txt:"干脆利落，目标明确",v:["星际","赛博未来"]},
+    {t:"D",txt:"尊重界限，保持格调",v:["西幻"]},
+    {t:"E",txt:"互相试探，暗流涌动",v:["灵异怪谈","现玄"]}
+  ]},
+  {q:"你更喜欢的季节感？",o:[
+    {t:"A",txt:"春雾、秋雨、冬雪",v:["古玄","古原"]},
+    {t:"B",txt:"暖阳、晚风、黄昏",v:["现原","校园"]},
+    {t:"C",txt:"极光、星云、永夜",v:["星际"]},
+    {t:"D",txt:"红叶、霜雾、满月",v:["西幻","妖和精怪"]},
+    {t:"E",txt:"暴雨、浓雾、深夜",v:["末世","灵异怪谈"]}
+  ]},
+  {q:"你更偏爱哪种故事内核？",o:[
+    {t:"A",txt:"宿命、因果、轮回",v:["古玄","妖和精怪"]},
+    {t:"B",txt:"成长、陪伴、遗憾",v:["现原","校园"]},
+    {t:"C",txt:"抗争、荣耀、征途",v:["星际","西幻"]},
+    {t:"D",txt:"时代、抉择、坚守",v:["民国"]},
+    {t:"E",txt:"人性、规则、恐惧",v:["末世","灵异怪谈"]}
+  ]},
+  {q:"你更喜欢的物品质感？",o:[
+    {t:"A",txt:"玉、木、纸、丝绸",v:["古玄","古原"]},
+    {t:"B",txt:"棉、玻璃、日常小物",v:["现原","校园"]},
+    {t:"C",txt:"金属、玻璃、冷硬材质",v:["星际","赛博未来"]},
+    {t:"D",txt:"皮革、宝石、复古器物",v:["西幻","民国"]},
+    {t:"E",txt:"旧物、铁锈、破损痕迹",v:["末世","灵异怪谈"]}
+  ]},
+  {q:"你更吃哪种情感模式？",o:[
+    {t:"A",txt:"隐忍深情，细水长流",v:["古玄","古原"]},
+    {t:"B",txt:"明目张胆，轻松甜",v:["校园","现原"]},
+    {t:"C",txt:"势均力敌，并肩同行",v:["星际","西幻"]},
+    {t:"D",txt:"克制拉扯，时代身不由己",v:["民国"]},
+    {t:"E",txt:"危险靠近，互相救赎",v:["末世","现玄","灵异怪谈"]}
+  ]},
+  {q:"你更喜欢的空间感？",o:[
+    {t:"A",txt:"庭院深深，曲径通幽",v:["古玄","古原"]},
+    {t:"B",txt:"市井烟火，人间气息",v:["现原","校园"]},
+    {t:"C",txt:"浩瀚无垠，宇宙辽阔",v:["星际"]},
+    {t:"D",txt:"城堡高塔，秘境森林",v:["西幻"]},
+    {t:"E",txt:"封闭狭小，压抑不安",v:["灵异怪谈","末世"]}
+  ]},
+  {q:"你更偏好的色彩倾向？",o:[
+    {t:"A",txt:"低饱和水墨、青绿",v:["古玄","古原"]},
+    {t:"B",txt:"明亮柔和、浅色系",v:["现原","校园"]},
+    {t:"C",txt:"冷蓝、银灰、科技色",v:["星际","赛博未来"]},
+    {t:"D",txt:"暗金、墨绿、酒红",v:["西幻","民国"]},
+    {t:"E",txt:"黑白灰、暗红、阴森",v:["灵异怪谈","末世"]}
+  ]},
+  {q:"你更喜欢的声音氛围？",o:[
+    {t:"A",txt:"风声、流水、琴音",v:["古玄","古原"]},
+    {t:"B",txt:"人声、车流、日常噪音",v:["现原","校园"]},
+    {t:"C",txt:"机械、引擎、电子音",v:["星际","赛博未来"]},
+    {t:"D",txt:"管风琴、马蹄、森林声",v:["西幻"]},
+    {t:"E",txt:"寂静、异响、回声",v:["灵异怪谈","末世"]}
+  ]},
+  {q:"你更向往的能力特质？",o:[
+    {t:"A",txt:"感知天地，心境通透",v:["古玄","妖和精怪"]},
+    {t:"B",txt:"共情温暖，让人安心",v:["现原","校园"]},
+    {t:"C",txt:"绝对力量，掌控局势",v:["星际","赛博未来"]},
+    {t:"D",txt:"天赋传承，血脉特别",v:["西幻"]},
+    {t:"E",txt:"诡异特殊，违反常理",v:["现玄","灵异怪谈"]}
+  ]},
+  {q:"你更喜欢的剧情走向？",o:[
+    {t:"A",txt:"意境为主，情绪流动",v:["古玄","古原"]},
+    {t:"B",txt:"日常碎片，细腻真实",v:["现原","校园"]},
+    {t:"C",txt:"战争冒险，升级变强",v:["星际","西幻"]},
+    {t:"D",txt:"权谋博弈，时代沉浮",v:["民国"]},
+    {t:"E",txt:"逃生解谜，生存挣扎",v:["末世","灵异怪谈"]}
+  ]},
+  {q:"你更喜欢的角色气质？",o:[
+    {t:"A",txt:"清冷出尘，淡然疏离",v:["古玄","古原"]},
+    {t:"B",txt:"开朗亲切，接地气",v:["现原","校园"]},
+    {t:"C",txt:"锐利果决，气场强大",v:["星际","赛博未来"]},
+    {t:"D",txt:"优雅高贵，自带风骨",v:["西幻","民国"]},
+    {t:"E",txt:"神秘危险，难以看透",v:["灵异怪谈","现玄"]}
+  ]},
+  {q:"你更喜欢的时间感？",o:[
+    {t:"A",txt:"岁月漫长，时光缓慢",v:["古玄","妖和精怪"]},
+    {t:"B",txt:"青春短暂，珍惜当下",v:["校园","现原"]},
+    {t:"C",txt:"未来科技，瞬息万变",v:["星际","赛博未来"]},
+    {t:"D",txt:"中古世纪，恒久史诗",v:["西幻"]},
+    {t:"E",txt:"时间紧迫，危机四伏",v:["末世","灵异怪谈"]}
+  ]},
+  {q:"你更偏爱哪种冲突？",o:[
+    {t:"A",txt:"内心挣扎，天人交战",v:["古玄","古原"]},
+    {t:"B",txt:"人际关系，生活烦恼",v:["现原","校园"]},
+    {t:"C",txt:"阵营对抗，种族冲突",v:["星际","西幻"]},
+    {t:"D",txt:"家国立场，信念冲突",v:["民国"]},
+    {t:"E",txt:"规则威胁，生存危机",v:["末世","灵异怪谈"]}
+  ]},
+  {q:"你更喜欢的治愈感来源？",o:[
+    {t:"A",txt:"自然山水，心境平和",v:["古玄","妖和精怪"]},
+    {t:"B",txt:"朋友陪伴，日常温暖",v:["现原","校园"]},
+    {t:"C",txt:"并肩作战，彼此信任",v:["星际","赛博未来"]},
+    {t:"D",txt:"信仰归宿，荣耀归属",v:["西幻"]},
+    {t:"E",txt:"黑暗尽头，微光存在",v:["末世","灵异怪谈"]}
+  ]},
+  {q:"你更吸引你的意象是？",o:[
+    {t:"A",txt:"云、鹤、月、竹",v:["古玄","古原"]},
+    {t:"B",txt:"灯、窗、书桌、花",v:["现原","校园"]},
+    {t:"C",txt:"星舰、机甲、星云",v:["星际"]},
+    {t:"D",txt:"龙、魔法阵、骑士",v:["西幻"]},
+    {t:"E",txt:"面具、旧照片、符号",v:["灵异怪谈","现玄"]}
+  ]},
+  {q:"你更能接受的群氛围？",o:[
+    {t:"A",txt:"文风柔和，氛围安静",v:["古玄","古原"]},
+    {t:"B",txt:"轻松沙雕，聊天为主",v:["现原","校园"]},
+    {t:"C",txt:"剧情为主，战力清晰",v:["星际","西幻"]},
+    {t:"D",txt:"格调偏正式，有规矩",v:["民国","西幻"]},
+    {t:"E",txt:"氛围偏暗，悬疑感重",v:["灵异怪谈","末世"]}
+  ]},
+  {q:"你更喜欢的服装风格？",o:[
+    {t:"A",txt:"飘逸宽松，古风韵味",v:["古玄","古原"]},
+    {t:"B",txt:"简约日常，舒适为主",v:["现原","校园"]},
+    {t:"C",txt:"机能风、紧身、未来感",v:["星际","赛博未来"]},
+    {t:"D",txt:"复古宫廷、欧式礼服",v:["西幻","民国"]},
+    {t:"E",txt:"破旧、暗黑、混搭",v:["末世","灵异怪谈"]}
+  ]},
+  {q:"你更喜欢的故事结局感？",o:[
+    {t:"A",txt:"留白余韵，意犹未尽",v:["古玄","古原"]},
+    {t:"B",txt:"温暖圆满，日常继续",v:["现原","校园"]},
+    {t:"C",txt:"功成名就，星河辽阔",v:["星际"]},
+    {t:"D",txt:"史诗落幕，传奇永存",v:["西幻","民国"]},
+    {t:"E",txt:"真相大白，劫后余生",v:["末世","灵异怪谈"]}
+  ]},
+  {q:"你更容易沉浸在哪种世界？",o:[
+    {t:"A",txt:"仙气缭绕，精怪妖魔",v:["古玄","妖和精怪"]},
+    {t:"B",txt:"现实都市，校园街巷",v:["现原","校园"]},
+    {t:"C",txt:"星际文明，高科技未来",v:["星际","赛博未来"]},
+    {t:"D",txt:"魔法骑士，神话种族",v:["西幻"]},
+    {t:"E",txt:"诡异规则，灵异异常",v:["灵异怪谈","现玄","末世"]}
+  ]},
+  {q:"你内心最向往的是？",o:[
+    {t:"A",txt:"逍遥长生，自在无忧",v:["古玄","妖和精怪"]},
+    {t:"B",txt:"平凡幸福，有人陪伴",v:["现原","校园"]},
+    {t:"C",txt:"征服星海，成为强者",v:["星际"]},
+    {t:"D",txt:"传承使命，书写传说",v:["西幻","民国"]},
+    {t:"E",txt:"揭开秘密，活下去",v:["末世","灵异怪谈"]}
+  ]}
+];
+
+const typeInfo = {
+  古玄:"古风玄幻，修仙、仙门、妖魔、灵力与宿命，氛围感极强",
+  古原:"古风原创，江湖朝堂、世家权谋，无玄幻，重剧情与人设",
+  现玄:"现代玄幻，都市异能、妖怪、灵异，日常与超自然结合",
+  现原:"现代原创，贴近现实生活，细腻日常、情感拉扯",
+  星际:"星际宇宙，机甲、帝国、星盗、异能，强强热血向",
+  西幻:"西方奇幻，魔法、骑士、精灵、龙族，史诗感拉满",
+  校园:"青春校园，青涩暗恋、成长日常，轻松治愈",
+  民国:"民国背景，谍战、军阀、文人商贾，氛围感拉满",
+  末世:"末世废土，生存、人性、异能，紧张刺激",
+  赛博未来:"赛博朋克，科技、义体、霓虹都市，风格前卫",
+  灵异怪谈:"规则怪谈、灵异解谜，悬疑诡异，细思极恐",
+  妖和精怪:"妖界精怪日常，温柔治愈或虐心宿命均可"
+};
+
+let current = 0;
+let selected = [];
+let score = {};
+
+function resetScore(){
+  for(let k in typeInfo) score[k] = 0;
+}
+
+function show(id){
+  document.getElementById("pageStart").classList.add("hide");
+  document.getElementById("pageQuiz").classList.add("hide");
+  document.getElementById("pageResult").classList.add("hide");
+  document.getElementById(id).classList.remove("hide");
+}
+
+function start(){
+  resetScore();
+  current = 0;
+  selected = [];
+  show("pageQuiz");
+  render();
+}
+
+function render(){
+  let q = questions[current];
+  document.getElementById("progress").innerText = `第 ${current+1}/25 题`;
+  document.getElementById("question").innerText = q.q;
+  let box = document.getElementById("options");
+  box.innerHTML = "";
+  selected = [];
+  q.o.forEach(o=>{
+    let btn = document.createElement("button");
+    btn.className = "option";
+    btn.innerText = o.t + "｜" + o.txt;
+    btn.dataset.type = o.t;
+    btn.onclick = function(){
+      if(this.classList.contains("selected")){
+        this.classList.remove("selected");
+        selected = selected.filter(s=>s.t!==o.t);
+      }else{
+        if(selected.length >= 2) return;
+        this.classList.add("selected");
+        selected.push(o);
+      }
+      document.getElementById("nextBtn").classList.remove("hide");
+    };
+    box.appendChild(btn);
+  });
+  document.getElementById("nextBtn").classList.add("hide");
+}
+
+function next(){
+  selected.forEach(o=>{
+    o.v.forEach(t=>{
+      if(score[t]!==undefined) score[t]++;
+    });
+  });
+  current++;
+  if(current >= questions.length){
+    showResult();
+  }else{
+    render();
+  }
+}
+
+function showResult(){
+  let maxType = Object.keys(score).reduce((a,b)=>score[a]>score[b]?a:b);
+  document.getElementById("typeName").innerText = maxType;
+  document.getElementById("typeDesc").innerText = typeInfo[maxType];
+  show("pageResult");
+}
+
+function restart(){
+  show("pageStart");
+}
+
+resetScore();
+</script>
+</body>
+</html>
